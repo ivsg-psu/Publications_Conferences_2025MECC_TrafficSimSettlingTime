@@ -1,0 +1,59 @@
+function [h1,intervalNum_hour,dataMean] = fcn_MeanAndVar(filePath,dataField,meanFigNum,SDFigNum,emptySpeed)
+% This function calculates the mean and variance of a simulation as
+% simulation time envolves
+% INPUTS:
+% filePath: the edge-based file full path. Usually in .csv format
+% fignum: the figure number
+
+% revision history: 20230703 first write of the code
+% 20240917: removed cumulative SD for raw data. This should plot SD of the
+% cumulative means
+
+
+data = readtable(filePath);
+data.edge_density = fillmissing(data.edge_density,"constant",0);
+data.edge_speed = fillmissing(data.edge_speed,"constant",emptySpeed);
+% How many time intervals are there?
+intervalNum = unique(data.interval_end); 
+
+dataMean = zeros(length(intervalNum),1);
+SD = zeros(length(intervalNum),1);
+selectedData = cell(length(intervalNum),1);
+
+% find index in this time interval
+for ii = 1:length(intervalNum)
+    ind = find(data.interval_end<=intervalNum(ii));
+    selectedData{ii} = data.(dataField)(ind);
+    dataMean(ii) = mean(selectedData{ii},'all','omitnan');
+    SD(ii) = std(selectedData{ii});   
+
+end
+
+figure(meanFigNum);
+hold on;
+intervalNum_hour = intervalNum/3600;
+h1 = plot(intervalNum_hour,dataMean,'k--','linewidth',0.8);
+h1.Color(4) = 0.5;
+xlabel('Time (hr)');
+if strcmp(dataField,'edge_speed')
+ylabel('Mean speed (m/s)');
+elseif strcmp(dataField,'edge_density')
+ylabel('Mean density (veh/km)');
+end
+cls_SUMOplot.fcn_setFigureFormat;
+% 
+% figure(SDFigNum);
+% hold on;
+% h2 = plot(intervalNum_hour,SD,'linewidth',1.5);
+% xlabel('Time (hr)');
+% if strcmp(dataField,'edge_speed')
+% ylabel('Standard deviation (m/s)');
+% elseif strcmp(dataField,'edge_density')
+% ylabel('Standard deviation (veh/km)');
+% end
+% ylim([1.8 2.3]);
+% 
+% cls_SUMOplot.fcn_setFigureFormat;
+
+
+end
